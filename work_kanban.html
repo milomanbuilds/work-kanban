@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tom's Work Board - Cohen & Co</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .client-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .client-tab {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .client-tab:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .client-tab.active {
+            background: white;
+            color: #2a5298;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .column {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .column-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .column-header h2 {
+            font-size: 1.2rem;
+            color: #2d3748;
+        }
+        .badge {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .todo .badge { background: #fed7d7; color: #c53030; }
+        .inprogress .badge { background: #feebc8; color: #c05621; }
+        .done .badge { background: #c6f6d5; color: #22543d; }
+        .blocked .badge { background: #e9d8fd; color: #553c9a; }
+        .task {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .task:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .task-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .task-desc {
+            font-size: 0.85rem;
+            color: #718096;
+            line-height: 1.5;
+        }
+        .task-meta {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .tag-discovery { background: #bee3f8; color: #2b6cb0; }
+        .tag-sprint { background: #d6f5d6; color: #276749; }
+        .tag-process { background: #feebc8; color: #c05621; }
+        .tag-roles { background: #e9d8fd; color: #553c9a; }
+        .tag-budget { background: #fed7d7; color: #c53030; }
+        .tag-client { background: #fef3c7; color: #92400e; border: 1px dashed #fbbf24; }
+        .timestamp {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .todo .dot { background: #fc8181; }
+        .inprogress .dot { background: #f6ad55; }
+        .done .dot { background: #68d391; }
+        .blocked .dot { background: #b794f4; }
+        .client-section {
+            display: none;
+        }
+        .client-section.active {
+            display: block;
+        }
+        .empty-state {
+            color: #a0aec0;
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 0.9rem;
+        }
+        .notes-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .notes-section h3 {
+            color: #2d3748;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .notes-section ul {
+            margin-left: 20px;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        .notes-section li {
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💼 Tom's Work Board</h1>
+        <p>Cohen & Co — Client Project Tracker</p>
+    </div>
+
+    <div class="client-tabs">
+        <button class="client-tab active" onclick="showClient('cws')">CWS</button>
+        <button class="client-tab" onclick="showClient('client2')">Client 2</button>
+        <button class="client-tab" onclick="showClient('client3')">CCA</button>
+        <button class="client-tab" onclick="showClient('general')">General Work</button>
+    </div>
+
+    <!-- CWS: Sage Intacct ERP -->
+    <div id="cws" class="client-section active">
+        
+        <div class="notes-section">
+            <h3>📝 CWS Notes</h3>
+            <ul>
+                <li><strong>Sprint 1 Focus:</strong> Payables & Revenue Recognition (items already written, no time for review)</li>
+                <li><strong>Sprint 2 Focus:</strong> Budget & Forecasting — discovery session planned for next week, additional TBD</li>
+                <li><strong>Align with Jack:</strong> Discovery calls — how they should go</li>
+                <li><strong>Align with Jack:</strong> Smaller goals between each sprint</li>
+            </ul>
+        </div>
+        
+        <div class="board">
+            <!-- TODO COLUMN -->
+            <div class="column todo">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>To Do</h2>
+                    <span class="badge">11</span>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Understand HQ vs. Local/Regional Nuances</div>
+                    <div class="task-desc">Map differences between headquarters and local/regional processes.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-discovery">Discovery</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Define Document Templates & Formats</div>
+                    <div class="task-desc">What will discovery docs, SOPs, and deliverables look like?</div>
+                    <div class="task-meta">
+                        <span class="tag tag-discovery">Documentation</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Discovery Per Level 2</div>
+                    <div class="task-desc">Each Level 2 needs their own discovery. Identify 3-4 L2s and scope their areas.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-discovery">Discovery</span>
+                        <span class="tag tag-roles">Roles</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Sprint Planning with Jack & Schulle</div>
+                    <div class="task-desc">Define smaller goals between main sprints. Align on 3-week sprint structure.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-sprint">Sprint</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Sprint 1 Budget/Row Reconciliation</div>
+                    <div class="task-desc">Specific Sprint 1 deliverable. Understand requirements and success criteria.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-sprint">Sprint 1</span>
+                        <span class="tag tag-budget">Budget</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Define Roles & Responsibilities</div>
+                    <div class="task-desc">Who does what? Map current roles to new roles for ERP implementation.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-roles">Roles</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Resource Planning (1-2 per Sprint)</div>
+                    <div class="task-desc">Assign 1-2 resources per sprint. Balance workload across 3-4 Level 2s.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-roles">Resources</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Map Approvals Workflow</div>
+                    <div class="task-desc">Who approves what? Document approval chains for budgets, changes, go-lives.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-process">SOP</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Create SOPs</div>
+                    <div class="task-desc">Standard Operating Procedures for discovery, testing, deployment.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-process">SOP</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Budgeting First (Priority)</div>
+                    <div class="task-desc">Get budgeting module right before other areas. Well documented requirements.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-budget">Budget</span>
+                        <span class="tag tag-process">Priority</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Reformat New SOPs from CWS</div>
+                    <div class="task-desc">Tom Girgash - Create new SOPs by reformatting what CWS has provided. Target: this week and next.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-process">SOP</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IN PROGRESS COLUMN -->
+            <div class="column inprogress">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>In Progress</h2>
+                    <span class="badge">0</span>
+                </div>
+                
+                <div class="empty-state">
+                    No active tasks for CWS<br>
+                    <small>Drag items here when you start</small>
+                </div>
+            </div>
+
+            <!-- BLOCKED COLUMN -->
+            <div class="column blocked">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Waiting On</h2>
+                    <span class="badge">3</span>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">⏸️ Email Sent to Jack — Awaiting Response</div>
+                    <div class="task-desc">✅ Sent 4:17 PM. Covered: Sprint 1 focus, Level 2 assignments, discovery call alignment, between-sprint goals. Waiting for Jack to reply and schedule alignment meeting.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-discovery">Jack</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">⏸️ Align with Jack on Discovery</div>
+                    <div class="task-desc">Schedule meeting with Jack to align on discovery approach. Define how discovery calls should go.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-discovery">Jack</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">⏸️ Level 2s Lead Discovery Calls</div>
+                    <div class="task-desc">Clarify: Should Level 2s lead discovery calls with Jack? Or support role? Need definition.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-roles">L2s</span>
+                        <span class="tag tag-discovery">Discovery</span>
+                        <span class="tag tag-client">CWS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DONE COLUMN -->
+            <div class="column done">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Done</h2>
+                    <span class="badge">0</span>
+                </div>
+
+                <div class="empty-state">
+                    Nothing completed for CWS<br>
+                    <small>Move finished tasks here</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENT 2: Placeholder -->
+    <div id="client2" class="client-section">
+        
+        <div class="notes-section">
+            <h3>📝 Client 2 Notes</h3>
+            <ul>
+                <li>No notes yet — add key information here</li>
+            </ul>
+        </div>
+        
+        <div class="board">
+            <div class="column todo">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>To Do</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">
+                    No tasks yet for Client 2<br>
+                    <small>Add tasks as they come up</small>
+                </div>
+            </div>
+
+            <div class="column inprogress">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>In Progress</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">No active tasks</div>
+            </div>
+
+            <div class="column blocked">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Waiting On</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">Nothing blocked</div>
+            </div>
+
+            <div class="column done">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Done</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">Nothing completed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CCA: Chart of Accounts Analysis -->
+    <div id="client3" class="client-section">
+        
+        <div class="notes-section">
+            <h3>📝 CCA Notes</h3>
+            <ul>
+                <li><strong>Task:</strong> CoA Analysis & Mapping (CCA → Compass structure)</li>
+                <li><strong>Client Issue:</strong> CCA CoA has "horrible xxx.xx structure"</li>
+                <li><strong>Team:</strong> Jason (lead), Patrick (setup), Simon (analysis), Tom (analysis), Chris (review)</li>
+                <li><strong>Tom's Availability:</strong> Before 11 AM, After 3 PM (Sage CRE training 11-3)</li>
+                <li><strong>Next Step:</strong> Wait for Patrick to set up workbook</li>
+            </ul>
+        </div>
+        
+        <div class="board">
+            <div class="column todo">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>To Do</h2>
+                    <span class="badge">2</span>
+                </div>
+                
+                <div class="task">
+                    <div class="task-title">📋 Morning Sync with Patrick & Simon</div>
+                    <div class="task-desc">✅ Meeting scheduled for tomorrow. Coordinate on CoA mapping approach before Sage CRE training at 11 AM.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-discovery">Sync</span>
+                        <span class="tag tag-client">CCA</span>
+                    </div>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Map CCA Accounts to Compass Structure</div>
+                    <div class="task-desc">Create "Current Account" and "Future State" columns. Map each CCA account to Compass structure. Apply updates to Compass as needed.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-process">CoA Mapping</span>
+                        <span class="tag tag-client">CCA</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column inprogress">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>In Progress</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">No active tasks</div>
+            </div>
+
+            <div class="column blocked">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Waiting On</h2>
+                    <span class="badge">1</span>
+                </div>
+                
+                <div class="task">
+                    <div class="task-title">⏸️ Patrick to Set Up Workbook</div>
+                    <div class="task-desc">Create "Compass COA Assessment Draft" workbook. Add Compass CoA, CCA CoA, and 2 copies of CoA Design Worksheet from World Clinic template. Save to SharePoint.</div>
+                    <div class="task-meta">
+                        <span class="tag tag-roles">Patrick</span>
+                        <span class="tag tag-client">CCA</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column done">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Done</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">Nothing completed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERAL WORK: Non-Client Activities -->
+    <div id="general" class="client-section">
+        
+        <div class="notes-section">
+            <h3>📝 General Work Notes</h3>
+            <ul>
+                <li>Internal tasks and non-client work</li>
+            </ul>
+        </div>
+        
+        <div class="board">
+            <div class="column todo">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>To Do</h2>
+                    <span class="badge">1</span>
+                </div>
+
+                <div class="task">
+                    <div class="task-title">📋 Copy Discovery CRE to Client Templates</div>
+                    <div class="task-desc">1) Copy first sheet from Discovery CRE.xlsx into Client - Questionnaire Worksheet FRD Template.xlsx (keep same format as other sheets). 2) Create construction section in Client - Discovery Session Template.pptx (keep same format as other slides).</div>
+                    <div class="task-meta">
+                        <span class="tag tag-process">Templates</span>
+                        <span class="tag tag-client">General</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column inprogress">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>In Progress</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">No active tasks</div>
+            </div>
+
+            <div class="column blocked">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Waiting On</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">Nothing blocked</div>
+            </div>
+
+            <div class="column done">
+                <div class="column-header">
+                    <div class="dot"></div>
+                    <h2>Done</h2>
+                    <span class="badge">0</span>
+                </div>
+                <div class="empty-state">Nothing completed</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="timestamp">
+        Last updated: Wednesday, February 5, 2026 at 8:22 AM EST
+    </div>
+
+    <script>
+        function showClient(clientId) {
+            // Hide all sections
+            document.querySelectorAll('.client-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active from all tabs
+            document.querySelectorAll('.client-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(clientId).classList.add('active');
+            
+            // Add active to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
